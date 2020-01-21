@@ -32,13 +32,13 @@ class controller:
 	####################################################################
 	def control(self, qmes, vmes, t):
 		# Definition of qdes, vdes and ades
-		self.qdes = 2.0*np.sin(self.omega * t) + self.q0
+		self.qdes = np.sin(self.omega * t) + self.q0
 		self.vdes = self.omega * np.cos(self.omega * t)
 		self.ades = -self.omega**2 * np.sin(self.omega * t)
 		
 		# PD Torque controller
-		P = np.diag((10.0, 5.0, 10.0, 5.0, 10.0, 5.0, 10.0, 5.0))
-		D = 0.1*np.diag((3.0, 1.0, 3.0, 1.0, 3.0, 1.0, 3.0, 1.0))
+		P = np.diag((5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
+		D = 0.1*np.diag((3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
 		tau = np.array(np.matrix(np.diag(P * (self.qdes - qmes) - D * vmes)).T)
 		
 		# Saturation to limit the maximal torque
@@ -55,7 +55,9 @@ dt = 0.001				# controller time step
 
 omega = np.zeros((8,1))		# sinus pulsation
 
-q0 = np.zeros((8,1))		# initial configuration
+q0 = np.zeros((8,1))
+#q0[0]=0.8
+#q0 = np.matrix([0.8, -1.6, 0.8, -1.6, -0.8, 1.6, -0.8, 1.6]).T	# initial configuration
 
 for i in range(8):
 	omega[i] = 1.0

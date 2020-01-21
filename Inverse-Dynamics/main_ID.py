@@ -1,14 +1,26 @@
 # coding: utf8
 
-import pybullet as p 
 import numpy as np 
 import pinocchio as pin
-import pybullet_data
 import time
+
 # import the controller class with its parameters
-from TSID_foot_placement_controller import controller, dt, q0, omega
+from P_controller import controller, dt, q0, omega
 import Relief_controller
 import EmergencyStop_controller
+
+
+# Flag robot's use to clean the CPU use when using the robot
+useRobot = False	# false when the robot is not used
+
+if useRobot :
+	import libmaster_board_sdk_pywrap as mbs
+
+if not useRobot:
+	import pybullet as p
+	import pybullet_data
+	import matplotlib.pylab as plt
+	t_list = []
 
 ########################################################################
 #                        Parameters definition                         #
@@ -19,52 +31,55 @@ N_SIMULATION = 10000	# number of time steps simulated
 
 t = 0.0  				# time
 
-# Set the simulation in real time
-realTimeSimulation = True
-
 # Initialize the error for the simulation time
 time_error = False
 
+if not useRobot:
 
-########################################################################
-#                              PyBullet                                #
-########################################################################
+	########################################################################
+	#                              PyBullet                                #
+	########################################################################
 
-# Start the client for PyBullet
-physicsClient = p.connect(p.GUI) # or p.DIRECT for non-graphical version
 
-# Load horizontal plane
-p.setAdditionalSearchPath(pybullet_data.getDataPath())
-planeId = p.loadURDF("plane.urdf")
+	# Start the client for PyBullet
+	physicsClient = p.connect(p.GUI) # or p.DIRECT for non-graphical version
 
-# Set the gravity
-p.setGravity(0,0,-9.81)
+	# Load horizontal plane
+	p.setAdditionalSearchPath(pybullet_data.getDataPath())
+	planeId = p.loadURDF("plane.urdf")
 
-# Load Quadruped robot
-robotStartPos = [0,0,0.5] 
-robotStartOrientation = p.getQuaternionFromEuler([0,0,0])
-p.setAdditionalSearchPath("/opt/openrobots/share/example-robot-data/robots/solo_description/robots")
-robotId = p.loadURDF("solo.urdf",robotStartPos, robotStartOrientation)
+	# Set the gravity
+	p.setGravity(0,0,-9.81)
 
-# Disable default motor control for revolute joints
-revoluteJointIndices = [0,1, 3,4, 6,7, 9,10]
-p.setJointMotorControlArray(robotId, jointIndices = revoluteJointIndices, controlMode = p.VELOCITY_CONTROL,targetVelocities = [0.0 for m in revoluteJointIndices], forces = [0.0 for m in revoluteJointIndices])
+	# Load Quadruped robot
+	robotStartPos = [0,0,0.5] 
+	robotStartOrientation = p.getQuaternionFromEuler([0,0,0])
+	p.setAdditionalSearchPath("/opt/openrobots/share/example-robot-data/robots/solo_description/robots")
+	robotId = p.loadURDF("solo.urdf",robotStartPos, robotStartOrientation)
 
-# Initialize the joint configuration to the position straight_standing
-initial_joint_positions = [0.8, -1.6, 0.8, -1.6, -0.8, 1.6, -0.8, 1.6]
-for i in range (len(initial_joint_positions)):
-	p.resetJointState(robotId, revoluteJointIndices[i], initial_joint_positions[i])
+	# Disable default motor control for revolute joints
+	revoluteJointIndices = [0,1, 3,4, 6,7, 9,10]
+	p.setJointMotorControlArray(robotId, jointIndices = revoluteJointIndices, controlMode = p.VELOCITY_CONTROL,targetVelocities = [0.0 for m in revoluteJointIndices], forces = [0.0 for m in revoluteJointIndices])
 
-# Enable torque control for revolute joints
-jointTorques = [0.0 for m in revoluteJointIndices]
+	""" # Initialize the joint configuration to the position straight_standing
+	initial_joint_positions = [0.8, -1.6, 0.8, -1.6, -0.8, 1.6, -0.8, 1.6]
+	for i in range (len(initial_joint_positions)):
+		p.resetJointState(robotId, revoluteJointIndices[i], initial_joint_positions[i])
+	"""
+	
+	# Initialize the FR_hip configuration to 0.8
+	#p.resetJointState(robotId, revoluteJointIndices[0], 0.8)
 
-p.setJointMotorControlArray(robotId, revoluteJointIndices, controlMode=p.TORQUE_CONTROL, forces=jointTorques)
+	# Enable torque control for revolute joints
+	jointTorques = [0.0 for m in revoluteJointIndices]
 
-# Fix the base in the world frame
-p.createConstraint(robotId, -1, -1, -1, p.JOINT_FIXED, [0, 0, 0], [0, 0, 0], [0, 0, 0.5])
+	p.setJointMotorControlArray(robotId, revoluteJointIndices, controlMode=p.TORQUE_CONTROL, forces=jointTorques)
 
-# Set time step for the simulation
-p.setTimeStep(dt)
+	# Fix the base in the world frame
+	p.createConstraint(robotId, -1, -1, -1, p.JOINT_FIXED, [0, 0, 0], [0, 0, 0], [0, 0, 0.5])
+
+	# Set time step for the simulation
+	p.setTimeStep(dt)
 
 
 ########################################################################
@@ -75,29 +90,23 @@ myController = controller(q0, omega, t)
 myReliefController = Relief_controller.controller()
 myEmergencyStop = EmergencyStop_controller.controller()
 
-Qmes = [[],[],[],[],[],[],[],[]]
-Vmes = [[],[],[],[],[],[],[],[]]
-Tau = [[],[],[],[],[],[],[],[]]
-
-t_list = []
-
-pos_error = [[],[]]
 
 for i in range (N_SIMULATION):
 	
-	if realTimeSimulation:	
-		time_start = time.time()
+	time_start = time.time()
+	
+	if not useRobot:
+
+		####################################################################
+		#                 Data collection from PyBullet                    #
+		####################################################################
 		
-	####################################################################
-	#                 Data collection from PyBullet                    #
-	####################################################################
-	
-	jointStates = p.getJointStates(robotId, revoluteJointIndices) # State of all joints
-	
-	# Joints configuration and velocity vector
-	qmes = np.vstack((np.array([[jointStates[i_joint][0] for i_joint in range(len(jointStates))]]).T))
-	vmes = np.vstack((np.array([[jointStates[i_joint][1] for i_joint in range(len(jointStates))]]).T))
-	
+		jointStates = p.getJointStates(robotId, revoluteJointIndices) # State of all joints
+		
+		# Joints configuration and velocity vector
+		qmes = np.vstack((np.array([[jointStates[i_joint][0] for i_joint in range(len(jointStates))]]).T))
+		vmes = np.vstack((np.array([[jointStates[i_joint][1] for i_joint in range(len(jointStates))]]).T))
+		
 	####################################################################
 	#                Select the appropriate controller 				   #
 	#								&								   #
@@ -118,66 +127,28 @@ for i in range (N_SIMULATION):
 	# Retrieve the joint torques from the appropriate controller
 	jointTorques = myController.control(qmes, vmes, t)
 	
-	pos_error[0].append(float(myController.FR_foot_goal.translation[0,] - myController.FR_foot_mes.translation[0,]))
-		
-	pos_error[1].append(float(myController.FR_foot_goal.translation[2,] - myController.FR_foot_mes.translation[2,]))
-	
-	
-	# Set control torque for all joints
-	p.setJointMotorControlArray(robotId, revoluteJointIndices, controlMode=p.TORQUE_CONTROL, forces=jointTorques)
-	
-	# Track the trajectories
-	
-	for i in range(8):
-		Qmes[i].append(qmes[i])
-		Vmes[i].append(vmes[i])
-		Tau[i].append(jointTorques[i,0])
-	
-	# Compute one step of simulation
-	p.stepSimulation()
-	
 	# Time incrementation
 	t += dt
-	
-	if realTimeSimulation:
+
+	if not useRobot:
+
+		# Set control torque for all joints
+		p.setJointMotorControlArray(robotId, revoluteJointIndices, controlMode=p.TORQUE_CONTROL, forces=jointTorques)
+
+		# Compute one step of simulation
+		p.stepSimulation()
+
 		time_spent = time.time() - time_start
-		if time_spent < dt:
-			time.sleep(dt-time_spent)	# ensure the simulation runs in real time
-	
-	t_list.append(time_spent)
 
-if(myController.error):
-		print("Status of the solution : ", myController.sol.status)
+		t_list.append(time_spent)
 
-## Plot the tracking of the trajectories
 
-import matplotlib.pylab as plt
 
-plt.figure(1)
+if not useRobot:
 
-plt.subplot(3,1,1)
-for i in range(8):
-		plt.plot(Qmes[i], '-')
-plt.grid()
-plt.title("Configuration tracking")
+	# Plot the time of each simulation step
+	plt.figure(1)
+	plt.plot(t_list, 'k+')
+	plt.show()
 
-plt.subplot(3,1,2)
-for i in range(8):
-	plt.plot(Vmes[i], '-')
-plt.grid()
-plt.title("Velocity tracking")
-
-plt.subplot(3,1,3)
-
-for i in range(8):
-	plt.plot(Tau[i], '-')
-plt.grid()
-plt.title("Torques tracking")
-
-plt.show()	
-
-plt.figure(2)
-plt.plot(t_list, 'k+')
-
-plt.show()
-
+	p.disconnect()
