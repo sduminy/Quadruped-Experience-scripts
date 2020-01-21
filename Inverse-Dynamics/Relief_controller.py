@@ -35,7 +35,7 @@ class controller:
 		t_max = 2.5
 		tau = np.maximum(np.minimum(tau, t_max * np.ones((8,1))), -t_max * np.ones((8,1)))
 		
-		return tau
+		return tau.flatten()
 
 class controller_12dof:
 	
