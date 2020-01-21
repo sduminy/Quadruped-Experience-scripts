@@ -1,7 +1,6 @@
 # coding: utf8
 
 import numpy as np 
-import pinocchio as pin
 import time
 
 # import the controller class with its parameters
@@ -12,6 +11,7 @@ import EmergencyStop_controller
 
 # Flag robot's use to clean the CPU use when using the robot
 useRobot = False	# false when the robot is not used
+
 
 if useRobot :
 	import libmaster_board_sdk_pywrap as mbs
@@ -34,6 +34,33 @@ t = 0.0  				# time
 # Initialize the error for the simulation time
 time_error = False
 
+if useRobot:
+	N_SLAVES = 6  # Maximum number of controled drivers
+	N_SLAVES_CONTROLED = 2  # Current number of controled drivers
+
+	iq_sat = 1.0  # Maximum amperage (A)
+	init_pos = [0.0 for i in range(N_SLAVES * 2)]  # List that will store the initial position of motors
+	state = 0  # State of the system (ready (1) or not (0))
+
+	name_interface = enp4s2f0 # Name of the ethernet interface : type ifconfig
+	
+	robot_if = mbs.MasterBoardInterface(name_interface) # Robot interface
+	robot_if.Init()  # Initialization of the interface between the computer and the master board
+	
+	for i in range(N_SLAVES_CONTROLED):  # We enable each controler driver and its two associated motors
+		robot_if.GetDriver(i).motor1.SetCurrentReference(0)
+		robot_if.GetDriver(i).motor2.SetCurrentReference(0)
+		robot_if.GetDriver(i).motor1.Enable()
+		robot_if.GetDriver(i).motor2.Enable()
+		robot_if.GetDriver(i).EnablePositionRolloverError()
+		robot_if.GetDriver(i).SetTimeout(5)
+		robot_if.GetDriver(i).Enable()
+
+	qmes = np.zeros((8,1))
+	vmes = np.zeros((8,1))
+	K = 1.0		# proportionnal gain to convert torques to current	
+	
+	
 if not useRobot:
 
 	########################################################################
@@ -95,6 +122,24 @@ for i in range (N_SIMULATION):
 	
 	time_start = time.time()
 	
+	if useRobot :
+
+		robot_if.ParseSensorData()  # Read sensor data sent by the masterboard
+
+		if (state == 0):  # If the system is not ready
+			state = 1
+			for i in range(N_SLAVES_CONTROLED * 2):  # Check if all motors are enabled and ready
+				if not (robot_if.GetMotor(i).IsEnabled() and robot_if.GetMotor(i).IsReady()):
+					state = 0
+				init_pos[i] = robot_if.GetMotor(i).GetPosition()
+				t = 0.0
+		else:  # If the system is ready
+			for i in range(N_SLAVES_CONTROLED * 2):
+				if robot_if.GetMotor(i).IsEnabled():
+					qmes[i] = robot_if.GetMotor(i).GetPosition()
+					vmes[i] = robot_if.GetMotor(i).GetVelocity()
+
+
 	if not useRobot:
 
 		####################################################################
@@ -129,6 +174,19 @@ for i in range (N_SIMULATION):
 	
 	# Time incrementation
 	t += dt
+	
+	if useRobot:
+		if (state==1):
+			for i in range(N_SLAVES_CONTROLED * 2):
+				if robot_if.GetMotor(i).IsEnabled():
+					cur = K * jointTorques
+					if (cur > iq_sat):  # Check saturation
+						cur = iq_sat
+					if (cur < -iq_sat):
+						cur = -iq_sat
+					robot_if.GetMotor(i).SetCurrentReference(cur)  # Set reference currents
+		robot_if.SendCommand()  # Send the reference currents to the master board
+
 
 	if not useRobot:
 
@@ -143,6 +201,8 @@ for i in range (N_SIMULATION):
 		t_list.append(time_spent)
 
 
+if useRobot:
+	robot_if.Stop()  # Shut down the interface between the computer and the master board
 
 if not useRobot:
 

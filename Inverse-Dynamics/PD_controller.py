@@ -32,7 +32,7 @@ class controller:
 	####################################################################
 	def control(self, qmes, vmes, t):
 		# Definition of qdes, vdes and ades
-		self.qdes = 2.0*np.sin(self.omega * t) + self.q0
+		self.qdes = np.sin(self.omega * t) + self.q0
 		self.vdes = self.omega * np.cos(self.omega * t)
 		self.ades = -self.omega**2 * np.sin(self.omega * t)
 		
