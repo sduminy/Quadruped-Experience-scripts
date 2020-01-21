@@ -43,8 +43,8 @@ def example_script(name_interface):
 
 	qmes8 = np.zeros((8,1))
 	vmes8 = np.zeros((8,1))
-	K = 1.0		# proportionnal gain to convert torques to current	
-	
+	K = 1.0/(9*0.02)    # proportionnal gain to convert joint torques to current : tau_mot = K'*I ; tau_joints = Kred*K'*I ; K' = 0.02 ; Kred = 9
+    
     print("-- Start of example script --")
 
     ########################################################################
@@ -75,7 +75,10 @@ def example_script(name_interface):
                     qmes8[i] = robot_if.GetMotor(i).GetPosition()
                     vmes8[i] = robot_if.GetMotor(i).GetVelocity()
 			
-			# Conversion (from 8 to 12 DOF) for TSID computation 
+			# Conversion (from 8 to 12 DOF) for TSID computation
+            # Base velocity is not measurable but maybe 
+            # we can get position and orientation of the base 
+            # with robot_if.GetIMU() 
 			qmes12 = np.concatenate((np.zeros((7,1)), np.matrix([0.]), qmes8[7:9], np.matrix([0.]), qmes8[9:11], np.matrix([0.]), qmes8[11:13], np.matrix([0.]), qmes8[13:15]))
 			vmes12 = np.concatenate((np.zeros((7,1)), np.matrix([0.]), vmes8[6:8], np.matrix([0.]), vmes8[8:10], np.matrix([0.]), vmes8[10:12], np.matrix([0.]), vmes8[12:14]))
 			
@@ -106,7 +109,7 @@ def example_script(name_interface):
         if (state==1):
             for i in range(N_SLAVES_CONTROLED * 2):
                 if robot_if.GetMotor(i).IsEnabled():
-                    cur = K * jointTorques
+                    cur = K * jointTorques[i,0]
                     if (cur > iq_sat):  # Check saturation
                         cur = iq_sat
                     if (cur < -iq_sat):

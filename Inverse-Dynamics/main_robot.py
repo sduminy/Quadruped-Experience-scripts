@@ -22,8 +22,8 @@ def example_script(name_interface):
     # Initialize the error for the simulation time
     time_error = False
     
-    N_SLAVES = 6  # Maximum number of controled drivers
-	N_SLAVES_CONTROLED = 2  # Current number of controled drivers
+    N_SLAVES = 4  # Maximum number of controled drivers
+	N_SLAVES_CONTROLED = 4  # Current number of controled drivers
 
 	iq_sat = 1.0  # Maximum amperage (A)
 	init_pos = [0.0 for i in range(N_SLAVES * 2)]  # List that will store the initial position of motors
@@ -43,8 +43,8 @@ def example_script(name_interface):
 
 	qmes = np.zeros((8,1))
 	vmes = np.zeros((8,1))
-	K = 1.0		# proportionnal gain to convert torques to current	
-	
+	Kt = 1.0/(9*0.02)    # A/Nm proportionnal gain to convert joint torques to current : tau_mot = K'*I ; tau_joints = Kred*K'*I ; K' = 0.02 ; Kred = 9
+    	
     print("-- Start of example script --")
 
     ########################################################################
@@ -69,51 +69,49 @@ def example_script(name_interface):
                     state = 0
                 init_pos[i] = robot_if.GetMotor(i).GetPosition()
                 t = 0.0
-        else:  # If the system is ready
+        if (state == 1):  # If the system is ready
             for i in range(N_SLAVES_CONTROLED * 2):
                 if robot_if.GetMotor(i).IsEnabled():
                     qmes[i] = robot_if.GetMotor(i).GetPosition()
                     vmes[i] = robot_if.GetMotor(i).GetVelocity()
 
-
-        ####################################################################
-        #                Select the appropriate controller 				   #
-        #								&								   #
-        #				Load the joint torques into the robot			   #
-        ####################################################################
-        
-        # If the limit bounds are reached, controller is switched to a pure derivative controller
-        if(myController.error):
-            print("Safety bounds reached. Switch to a safety controller")
-            myController = myReliefController
+            ####################################################################
+            #                Select the appropriate controller 				   #
+            #								&								   #
+            #				Load the joint torques into the robot			   #
+            ####################################################################
             
-        # If the simulation time is too long, controller is switched to a zero torques controller
-        time_error = time_error or (time.time()-time_start > 0.003)
-        if (time_error):
-            print("Computation time lasted to long. Switch to a zero torque control")
-            myController = myEmergencyStop
+            # If the limit bounds are reached, controller is switched to a pure derivative controller
+            if(myController.error):
+                print("Safety bounds reached. Switch to a safety controller")
+                myController = myReliefController
+                
+            # If the simulation time is too long, controller is switched to a zero torques controller
+            time_error = time_error or (time.time()-time_start > 0.003)
+            if (time_error):
+                print("Computation time lasted to long. Switch to a zero torque control")
+                myController = myEmergencyStop
+                
+            # Retrieve the joint torques from the appropriate controller
+            jointTorques = myController.control(qmes, vmes, t)
             
-        # Retrieve the joint torques from the appropriate controller
-        jointTorques = myController.control(qmes, vmes, t)
-        
-        # Time incrementation
-        t += dt
-        
-        if (state==1):
             for i in range(N_SLAVES_CONTROLED * 2):
                 if robot_if.GetMotor(i).IsEnabled():
-                    cur = K * jointTorques
+                    cur = Kt * jointTorques[i,0]
                     if (cur > iq_sat):  # Check saturation
                         cur = iq_sat
                     if (cur < -iq_sat):
                         cur = -iq_sat
                     robot_if.GetMotor(i).SetCurrentReference(cur)  # Set reference currents
-        robot_if.SendCommand()  # Send the reference currents to the master board
-    
-    # At the end of the loop, set the reference current to zero
+            robot_if.SendCommand()  # Send the reference currents to the master board
+
+        # Time incrementation
+        t += dt
+
+    # At the end of the loop, set the reference current to zero before deconnecting
     for i in range(N_SLAVES_CONTROLED * 2):
         if robot_if.GetMotor(i).IsEnabled():
-            robot_if.GetMotor(i).SetCurrentReference(0.0)  # Set reference currents
+            robot_if.GetMotor(i).SetCurrentReference(0.0)
     robot_if.SendCommand()
 
     robot_if.Stop()  # Shut down the interface between the computer and the master board
