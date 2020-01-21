@@ -1,10 +1,12 @@
 # coding: utf8
 
-import pybullet as p 
-import numpy as np 
-import pinocchio as pin
-import pybullet_data
 import time
+import numpy as np
+import pybullet as p
+import pybullet_data
+import pinocchio as pin
+import matplotlib.pylab as plt
+
 # import the controller class with its parameters
 from TSID_contacts_and_posture_controller import controller, dt, q0, omega
 import Relief_controller
@@ -19,12 +21,10 @@ N_SIMULATION = 10000	# number of time steps simulated
 
 t = 0.0  				# time
 
-# Set the simulation in real time
-realTimeSimulation = True
-
 # Initialize the error for the simulation time
 time_error = False
 
+t_list = []
 
 ########################################################################
 #                              PyBullet                                #
@@ -70,16 +70,9 @@ myController = controller(q0, omega, t)
 myReliefController = Relief_controller.controller_12dof()
 myEmergencyStop = EmergencyStop_controller.controller()
 
-Qmes = [[],[],[],[],[],[],[],[]]
-Vmes = [[],[],[],[],[],[],[],[]]
-Tau = [[],[],[],[],[],[],[],[]]
-
-t_list = []
-
 for i in range (N_SIMULATION):
 	
-	if realTimeSimulation:	
-		time_start = time.time()
+	time_start = time.time()
 		
 	####################################################################
 	#                 Data collection from PyBullet                    #
@@ -119,54 +112,19 @@ for i in range (N_SIMULATION):
 	# Set control torque for all joints
 	p.setJointMotorControlArray(robotId, revoluteJointIndices, controlMode=p.TORQUE_CONTROL, forces=jointTorques)
 	
-	# Track the trajectories
-	
-	for i in range(8):
-		Qmes[i].append(qmes8[i+7])
-		Vmes[i].append(vmes8[i+6])
-		Tau[i].append(jointTorques[i,0])
-	
 	# Compute one step of simulation
 	p.stepSimulation()
 	
 	# Time incrementation
 	t += dt
 	
-	if realTimeSimulation:
-		time_spent = time.time() - time_start
-		if time_spent < dt:
-			time.sleep(dt-time_spent)	# ensure the simulation runs in real time
+	time_spent = time.time() - time_start
 	
 	t_list.append(time_spent)
 
-## Plot the tracking of the trajectories
-
-import matplotlib.pylab as plt
+## Plot the tracking of the trajectories	
 
 plt.figure(1)
-
-plt.subplot(3,1,1)
-for i in range(8):
-		plt.plot(Qmes[i], '-')
-plt.grid()
-plt.title("Configuration tracking")
-
-plt.subplot(3,1,2)
-for i in range(8):
-	plt.plot(Vmes[i], '-')
-plt.grid()
-plt.title("Velocity tracking")
-
-plt.subplot(3,1,3)
-
-for i in range(8):
-	plt.plot(Tau[i], '-')
-plt.grid()
-plt.title("Torques tracking")
-
-plt.show()	
-
-plt.figure(2)
 plt.plot(t_list, 'k+')
 
 plt.show()

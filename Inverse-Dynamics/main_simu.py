@@ -58,9 +58,6 @@ for i in range (len(initial_joint_positions)):
 	p.resetJointState(robotId, revoluteJointIndices[i], initial_joint_positions[i])
 """
 
-# Initialize the FR_hip configuration to 0.8
-#p.resetJointState(robotId, revoluteJointIndices[0], 0.8)
-
 # Enable torque control for revolute joints
 jointTorques = [0.0 for m in revoluteJointIndices]
 

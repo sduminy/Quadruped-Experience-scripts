@@ -56,8 +56,6 @@ dt = 0.001				# controller time step
 omega = np.zeros((8,1))		# sinus pulsation
 
 q0 = np.zeros((8,1))
-#q0[0]=0.8
-#q0 = np.matrix([0.8, -1.6, 0.8, -1.6, -0.8, 1.6, -0.8, 1.6]).T	# initial configuration
 
 for i in range(8):
 	omega[i] = 1.0
