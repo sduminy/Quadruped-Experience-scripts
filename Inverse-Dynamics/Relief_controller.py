@@ -7,11 +7,8 @@
 #                                                                      #
 ########################################################################
 
-import pinocchio as pin
-import numpy as np 
-import matplotlib.pylab as plt 
 
-pin.switchToNumpyMatrix()
+import numpy as np 
 
 
 ########################################################################
@@ -31,7 +28,7 @@ class controller:
 	def control(self, qmes, vmes, t):
 		
 		# D Torque controller,
-		D = 0.2
+		D = 0.05
 		tau = -D * vmes
 		
 		# Saturation to limit the maximal torque

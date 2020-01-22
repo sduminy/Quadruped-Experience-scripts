@@ -1,10 +1,9 @@
 # coding: utf8
 
-import pinocchio as pin
+
 import numpy as np
 import matplotlib.pylab as plt 
 
-pin.switchToNumpyMatrix()
 
 
 ########################################################################
@@ -68,3 +67,28 @@ class log:
         plt.legend()
         plt.show()
 
+    def plot_logs_FL(self):
+        
+        plt.figure(1)
+        plt.plot(self.times, 'k+')
+        plt.grid()
+        plt.title('Computing time')
+        plt.show()
+
+        plt.figure(2)
+        plt.suptitle('Positions tracking')
+        for k in range(2):
+            plt.subplot(1,2,k+1)
+            plt.plot(self.des_positions[:,k], label='Desired positions')
+            plt.plot(self.meas_positions[:,k], label='Measured positions')
+        plt.legend()
+        plt.show()
+        
+        plt.figure(3)
+        plt.suptitle('Velocities tracking')
+        for k in range(2):
+            plt.subplot(1,2,k+1)
+            plt.plot(self.des_velocities[:,k], label='Desired velocities')
+            plt.plot(self.meas_velocities[:,k], label='Measured velocities')
+        plt.legend()
+        plt.show()

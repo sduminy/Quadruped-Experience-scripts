@@ -51,11 +51,11 @@ def example_script(name_interface):
 
     # Initialize the main controller
     myController = controller(q0, omega, t)
-    myLog = log_class.log(N_LOG=10)
+    myLog = log_class.log(N_LOG=14000)
 
     last = clock()
 
-    while ((not robot_if.IsTimeout()) and (clock() < 20)):  # Stop after 15 seconds (around 5 seconds are used at the start for calibration)
+    while ((not robot_if.IsTimeout()) and (clock() < 60)):  # Stop after 15 seconds (around 5 seconds are used at the start for calibration)
         if ((clock() - last) > dt):
             last = clock()
             cpt += 1
@@ -114,6 +114,12 @@ def example_script(name_interface):
                 sys.stdout.flush()  # for Python 2, use print( .... , flush=True) for Python 3
             robot_if.SendCommand()  # Send the reference currents to the master board
 
+    print("-- Shutting down --")
+    
+    np.savez('/home/ada/Desktop/Script_Segolene_XP/Quadruped-Experience-scripts/Inverse-Dynamics/logs', times=myLog.times, des_positions=myLog.des_positions, des_velocities=myLog.des_velocities, meas_positions=myLog.meas_positions, meas_velocities=myLog.meas_velocities)
+    print(cpt)
+    myLog.plot_logs_FL()
+
     robot_if.Stop()  # Shut down the interface between the computer and the master board
     
     if robot_if.IsTimeout():
@@ -121,7 +127,7 @@ def example_script(name_interface):
 
     print("-- End of example script --")
 
-    myLog.plot_logs()
+    
 
 
 def main(argv):

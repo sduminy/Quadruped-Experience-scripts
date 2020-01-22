@@ -7,11 +7,8 @@
 #                                                                      #
 ########################################################################
 
-import pinocchio as pin
-import numpy as np
-import matplotlib.pylab as plt 
 
-pin.switchToNumpyMatrix()
+import numpy as np
 
 
 ########################################################################
@@ -33,14 +30,14 @@ class controller:
 	####################################################################
 	def control(self, qmes, vmes, t):
 		# Definition of qdes, vdes and ades
-		self.qdes = np.sin(self.omega * t) + self.q0
-		self.vdes = self.omega * np.cos(self.omega * t)
-		self.ades = -self.omega**2 * np.sin(self.omega * t)
+		self.qdes = 0.5*np.sin(self.omega * t) + self.q0
+		self.vdes = 0.5*self.omega * np.cos(self.omega * t)
+		self.ades = -0.5*self.omega**2 * np.sin(self.omega * t)
 		
 		# PD Torque controller
-		P = np.diag((1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0))
-		D = 0.1*np.diag((0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
-		tau = np.array(np.matrix(np.diag(P * (self.qdes - qmes) - D * vmes)).T)
+		P = 0*np.diag((1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
+		D = 0.2*np.diag((1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
+		tau = np.array((P @ (self.qdes - qmes) - D @ vmes).T)
 		
 		# Saturation to limit the maximal torque
 		t_max = 1.

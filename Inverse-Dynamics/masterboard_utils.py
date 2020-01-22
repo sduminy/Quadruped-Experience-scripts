@@ -1,6 +1,6 @@
 N_SLAVES_CONTROLED = 4  # Current number of controled drivers
-Kt = 1.0/(9*0.02)
-iq_sat = 0.8  # Maximum amperage (A)
+Kt = 1.0/(9*0.02) #A/Nm
+iq_sat = 5.0  # Maximum amperage (A)
 
 def enable_all_motors(robot_if):
     # Enable each controler driver and its two associated motors
@@ -61,35 +61,35 @@ def update_measured_q_v(robot_if, q, v):
             if (i == 0):
                 # left front hip
                 q[0] = -robot_if.GetMotor(i).GetPosition()/9.0
-                v[0] = -robot_if.GetMotor(i).GetVelocity()/9.0
+                v[0] = -robot_if.GetMotor(i).GetVelocity()/1.0
             if (i == 1):
                 # left front knee
                 q[1] = -robot_if.GetMotor(i).GetPosition()/9.0
-                v[1] = -robot_if.GetMotor(i).GetVelocity()/9.0
+                v[1] = -robot_if.GetMotor(i).GetVelocity()/1.0
             if (i == 2):
                 # right front knee
                 q[3] = +robot_if.GetMotor(i).GetPosition()/9.0
-                v[3] = +robot_if.GetMotor(i).GetVelocity()/9.0
+                v[3] = +robot_if.GetMotor(i).GetVelocity()/1.0
             if (i == 3):
                 # right front hip
                 q[2] = +robot_if.GetMotor(i).GetPosition()/9.0
-                v[2] = +robot_if.GetMotor(i).GetVelocity()/9.0
+                v[2] = +robot_if.GetMotor(i).GetVelocity()/1.0
             if (i == 4):
                 # left hind knee
                 q[5] = -robot_if.GetMotor(i).GetPosition()/9.0
-                v[5] = -robot_if.GetMotor(i).GetVelocity()/9.0
+                v[5] = -robot_if.GetMotor(i).GetVelocity()/1.0
             if (i == 5):
                 # left hind hip
                 q[4] = -robot_if.GetMotor(i).GetPosition()/9.0
-                v[4] = -robot_if.GetMotor(i).GetVelocity()/9.0
+                v[4] = -robot_if.GetMotor(i).GetVelocity()/1.0
             if (i == 6):
                 # right hind hip
                 q[6] = +robot_if.GetMotor(i).GetPosition()/9.0
-                v[6] = +robot_if.GetMotor(i).GetVelocity()/9.0
+                v[6] = +robot_if.GetMotor(i).GetVelocity()/1.0
             if (i == 7):
                 # right hind knee
                 q[7] = +robot_if.GetMotor(i).GetPosition()/9.0
-                v[7] = +robot_if.GetMotor(i).GetVelocity()/9.0
+                v[7] = +robot_if.GetMotor(i).GetVelocity()/1.0
             
     return
 

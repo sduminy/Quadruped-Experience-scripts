@@ -7,11 +7,8 @@
 #                                                                      #
 ########################################################################
 
-import pinocchio as pin
-import numpy as np 
-import matplotlib.pylab as plt 
 
-pin.switchToNumpyMatrix()
+import numpy as np 
 
 
 ########################################################################
