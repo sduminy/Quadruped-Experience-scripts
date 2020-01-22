@@ -186,7 +186,7 @@ class controller:
 		
 		self.error = self.error or (self.sol.status!=0) or (qmes12[8] < -np.pi/2) or (qmes12[11] < -np.pi/2) or (qmes12[14] < -np.pi/2) or (qmes12[17] < -np.pi/2) or (qmes12[8] > np.pi/2) or (qmes12[11] > np.pi/2) or (qmes12[14] > np.pi/2) or (qmes12[17] > np.pi/2)
 		
-		return tau
+		return tau.flatten()
 
 # Parameters for the controller
 

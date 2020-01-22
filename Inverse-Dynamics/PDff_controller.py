@@ -69,7 +69,7 @@ class controller:
 		
 		self.error = self.error or (qmes[0] < -np.pi/2) or (qmes[2] < -np.pi/2) or (qmes[4] < -np.pi/2) or (qmes[6] < -np.pi/2) or (qmes[0] > np.pi/2) or (qmes[2] > np.pi/2) or (qmes[4] > np.pi/2) or (qmes[6] > np.pi/2)
 	
-		return tau
+		return tau.flatten()
 
 # Parameters for the controller
 

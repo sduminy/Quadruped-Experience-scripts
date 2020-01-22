@@ -1,4 +1,5 @@
 # coding: utf8
+
 from time import clock
 import time
 import sys
@@ -7,11 +8,14 @@ import os
 
 import libmaster_board_sdk_pywrap as mbs
 import numpy as np
+
 # import the controller class with its parameters
 from P_controller import controller, q0, omega
 import Relief_controller
 import EmergencyStop_controller
+from log_class import log
 from masterboard_utils import *
+
 dt = 0.001  #  Time step
 
 def example_script(name_interface):
@@ -20,31 +24,24 @@ def example_script(name_interface):
     #                Parameters definition & Initialization                #
     ########################################################################
 
-
     t = 0  				# time
-    cpt = 0       
-    # Initialize the error for the simulation time
-    time_error = False
+    cpt = 0             # iteration counter
+    time_error = False  # Initialize the error for the simulation time
     state = 0  # State of the system (ready (1) or not (0))
     
-    os.nice(-20)
+    os.nice(-20)    # Set the highest priority to process the script (~Real-Time)
+    
     robot_if = mbs.MasterBoardInterface(name_interface)  # Robot interface
     robot_if.Init()  # Initialization of the interface between the computer and the master board
 
-    #  We enable each controler driver and its two associated motors
-    for i in range(N_SLAVES_CONTROLED):
-        robot_if.GetDriver(i).motor1.SetCurrentReference(0)
-        robot_if.GetDriver(i).motor2.SetCurrentReference(0)
-        robot_if.GetDriver(i).motor1.Enable()
-        robot_if.GetDriver(i).motor2.Enable()
-        robot_if.GetDriver(i).EnablePositionRolloverError()
-        robot_if.GetDriver(i).SetTimeout(5)
-        robot_if.GetDriver(i).Enable()
-
-    qmes = np.zeros((8, 1))
-    vmes = np.zeros((8, 1))
-    # A/Nm proportionnal gain to convert joint torques to current : tau_mot = K'*I ; tau_joints = Kred*K'*I ; K' = 0.02 ; Kred = 9
-    Kt = 1.0/(9*0.02)
+    enable_all_motors(robot_if)
+ 
+    qmes = np.zeros((8, 1)) # intialize the measured positions vector
+    vmes = np.zeros((8, 1)) # intialize the measured velocities vector
+    
+    # Proportionnal gain to convert joint torques to current : tau_mot = K'*I 
+    # tau_joints = Kred*K'*I ; K' = 0.02 Nm/A ; Kred = 9.0
+    Kt = 1.0/(9*0.02)   # A/Nm
 
     print("-- Start of example script --")
 
@@ -52,13 +49,13 @@ def example_script(name_interface):
     #                            Control loop                              #
     ########################################################################
 
+    # Initialize the main controller
     myController = controller(q0, omega, t, N_LOG = 10)
-    myReliefController = Relief_controller.controller()
-    myEmergencyStop = EmergencyStop_controller.controller()
-    
+    myLog = log(N_LOG=10)
+
     last = clock()
 
-    while ((not robot_if.IsTimeout()) and (clock() < 60)):  # Stop after 15 seconds (around 5 seconds are used at the start for calibration)
+    while ((not robot_if.IsTimeout()) and (clock() < 20)):  # Stop after 15 seconds (around 5 seconds are used at the start for calibration)
         if ((clock() - last) > dt):
             last = clock()
             cpt += 1
@@ -66,18 +63,18 @@ def example_script(name_interface):
             # Time incrementation
             t += dt
             
-            time_start = time.time()
             robot_if.ParseSensorData()  # Read sensor data sent by the masterboard
             
             if (state == 0):  #  If the system is not ready
                 t = 0
                 if (are_all_motor_ready(robot_if)):
-                    state =1 
+                    state = 1 
     
 
-            if(state==1):  # If the system is ready
-                #Get measured positions and velocities
-                update_measured_q_v(robot_if,qmes,vmes)
+            if (state==1):  # If the system is ready
+                
+                # Get measured positions and velocities
+                update_measured_q_v(robot_if, qmes, vmes)
 
                 ####################################################################
                 #                Select the appropriate controller 				   #
@@ -88,17 +85,23 @@ def example_script(name_interface):
                 # If the limit bounds are reached, controller is switched to a pure derivative controller
                 if(myController.error):
                     print("Safety bounds reached. Switch to a safety controller")
+                    myReliefController = Relief_controller.controller(myController.qdes, myController.vdes, myController.times, myController.i, myController.des_positions, myController.des_velocities, myController.meas_positions, myController.meas_velocities, N_LOG=10)
                     myController = myReliefController
 
                 # If the simulation time is too long, controller is switched to a zero torques controller
-                time_error = time_error or (time.time()-time_start > 0.003)
+                time_error = time_error or ((clock()-last) > 0.003)
                 if (time_error):
                     print("Computation time lasted to long. Switch to a zero torque control")
+                    myEmergencyStop = EmergencyStop_controller.controller(myController.qdes, myController.vdes, myController.times, myController.i, myController.des_positions, myController.des_velocities, myController.meas_positions, myController.meas_velocities, N_LOG=10)
                     myController = myEmergencyStop
 
                 # Retrieve the joint torques from the appropriate controller
-                jointTorques = myController.control(qmes, vmes, t)
-                set_desired_torques(robot_if,jointTorques)
+                jointTorques = myController.control(qmes, vmes, t, clock()-last)
+                # Set the desired torques to the motors
+                set_desired_torques(robot_if, jointTorques)
+
+                # Logging
+                myLog.log_method(clock()-last, myController.qdes, myController.vdes, qmes, vmes)
                 
             if ((cpt % 100) == 0):  # Display state of the system once every 100 iterations of the main loop
                 print(chr(27) + "[2J")
@@ -111,15 +114,15 @@ def example_script(name_interface):
                 sys.stdout.flush()  # for Python 2, use print( .... , flush=True) for Python 3
             robot_if.SendCommand()  # Send the reference currents to the master board
 
-    print("-- end of the loop --")
-
-    print("-- shutingdown... --")
     robot_if.Stop()  # Shut down the interface between the computer and the master board
     
     if robot_if.IsTimeout():
         print("Masterboard timeout detected. Either the masterboard has been shut down or there has been a connection issue with the cable/wifi.")
 
     print("-- End of example script --")
+
+    myLog.plot_logs()
+    #myController.plot_logs()
 
 
 def main(argv):
