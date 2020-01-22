@@ -11,9 +11,9 @@ import numpy as np
 
 # import the controller class with its parameters
 from P_controller import controller, q0, omega
+import log_class
 import Relief_controller
 import EmergencyStop_controller
-from log_class import log
 from masterboard_utils import *
 
 dt = 0.001  #  Time step
@@ -50,8 +50,8 @@ def example_script(name_interface):
     ########################################################################
 
     # Initialize the main controller
-    myController = controller(q0, omega, t, N_LOG = 10)
-    myLog = log(N_LOG=10)
+    myController = controller(q0, omega, t)
+    myLog = log_class.log(N_LOG=10)
 
     last = clock()
 
@@ -85,18 +85,18 @@ def example_script(name_interface):
                 # If the limit bounds are reached, controller is switched to a pure derivative controller
                 if(myController.error):
                     print("Safety bounds reached. Switch to a safety controller")
-                    myReliefController = Relief_controller.controller(myController.qdes, myController.vdes, myController.times, myController.i, myController.des_positions, myController.des_velocities, myController.meas_positions, myController.meas_velocities, N_LOG=10)
+                    myReliefController = Relief_controller.controller(myController.qdes, myController.vdes)
                     myController = myReliefController
 
                 # If the simulation time is too long, controller is switched to a zero torques controller
                 time_error = time_error or ((clock()-last) > 0.003)
                 if (time_error):
                     print("Computation time lasted to long. Switch to a zero torque control")
-                    myEmergencyStop = EmergencyStop_controller.controller(myController.qdes, myController.vdes, myController.times, myController.i, myController.des_positions, myController.des_velocities, myController.meas_positions, myController.meas_velocities, N_LOG=10)
+                    myEmergencyStop = EmergencyStop_controller.controller(myController.qdes, myController.vdes)
                     myController = myEmergencyStop
 
                 # Retrieve the joint torques from the appropriate controller
-                jointTorques = myController.control(qmes, vmes, t, clock()-last)
+                jointTorques = myController.control(qmes, vmes, t)
                 # Set the desired torques to the motors
                 set_desired_torques(robot_if, jointTorques)
 
@@ -122,7 +122,6 @@ def example_script(name_interface):
     print("-- End of example script --")
 
     myLog.plot_logs()
-    #myController.plot_logs()
 
 
 def main(argv):

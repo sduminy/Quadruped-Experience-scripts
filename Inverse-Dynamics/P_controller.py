@@ -20,27 +20,18 @@ pin.switchToNumpyMatrix()
 
 class controller:
 	
-	def __init__(self, q0, omega, t, N_LOG=0):
+	def __init__(self, q0, omega, t):
 		self.omega = omega
 		self.q0 = q0
 		self.qdes = q0.copy()
 		self.vdes = np.zeros((8,1))
 		self.ades = np.zeros((8,1))
-		self.error = False
-		self.i=0
-		self.N_LOG = N_LOG
-		if N_LOG > 0:
-			self.times = np.zeros((N_LOG,1))
-			self.des_positions = np.zeros((N_LOG,8))
-			self.des_velocities = np.zeros((N_LOG,8))
-			self.meas_positions = np.zeros((N_LOG,8))
-			self.meas_velocities = np.zeros((N_LOG,8))
-			
+		self.error = False			
 		
 	####################################################################
 	#                      Torque Control method                       #
 	####################################################################
-	def control(self, qmes, vmes, t, computing_time):
+	def control(self, qmes, vmes, t):
 		# Definition of qdes, vdes and ades
 		self.qdes = np.sin(self.omega * t) + self.q0
 		self.vdes = self.omega * np.cos(self.omega * t)
@@ -58,48 +49,7 @@ class controller:
 		# Safety bounds ; call the safety controller if reached
 		self.error = self.error or (qmes[0] < -np.pi/2) or (qmes[2] < -np.pi/2) or (qmes[4] < -np.pi/2) or (qmes[6] < -np.pi/2) or (qmes[0] > np.pi/2) or (qmes[2] > np.pi/2) or (qmes[4] > np.pi/2) or (qmes[6] > np.pi/2)
 
-		# Logging
-		""" if (self.i<self.N_LOG):
-			self.times[self.i,0] = computing_time
-			for j in range(8):
-				self.des_positions[self.i,j] = self.qdes[j]
-				self.des_velocities[self.i,j] = self.vdes[j]
-				self.meas_positions[self.i,j] = qmes[j]
-				self.meas_velocities[self.i,j] = vmes[j]
-		self.i += 1 """
-
 		return tau.flatten()
-
-	####################################################################
-	#                         Logs plot method                         #
-	####################################################################
-	def plot_logs(self):
-		
-		plt.figure(1)
-		plt.plot(self.times, 'k+')
-		plt.grid()
-		plt.title('Computing time')
-		plt.show()
-
-		plt.figure(2)
-		for k in range(8):
-			plt.subplot(4,2,k+1)
-			plt.plot(self.des_positions[:,k], label='Desired positions')
-			plt.plot(self.meas_positions[:,k], label='Measured positions')
-		plt.legend()
-		plt.title('Positions tracking')
-		plt.show()
-		
-		plt.figure(3)
-		for k in range(8):
-			plt.subplot(4,2,k+1)
-			plt.plot(self.des_velocities[:,k], label='Desired velocities')
-			plt.plot(self.meas_velocities[:,k], label='Measured velocities')
-		plt.legend()
-		plt.title('Velocities tracking')
-		plt.show()
-
-		
 
 
 # Parameters for the controller
@@ -110,4 +60,3 @@ q0 = np.zeros((8,1))
 
 for i in range(8):
 	omega[i] = 1.0
-	#q0[i] = i/20

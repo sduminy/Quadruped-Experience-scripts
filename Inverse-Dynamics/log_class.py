@@ -39,8 +39,6 @@ class log:
                 self.meas_velocities[self.i,j] = vmes[j]
         self.i += 1
 
-        return
-
     ####################################################################
     #                         Logs plot method                         #
     ####################################################################
@@ -53,20 +51,20 @@ class log:
         plt.show()
 
         plt.figure(2)
+        plt.suptitle('Positions tracking')
         for k in range(8):
             plt.subplot(4,2,k+1)
             plt.plot(self.des_positions[:,k], label='Desired positions')
             plt.plot(self.meas_positions[:,k], label='Measured positions')
         plt.legend()
-        plt.title('Positions tracking')
         plt.show()
         
         plt.figure(3)
+        plt.suptitle('Velocities tracking')
         for k in range(8):
             plt.subplot(4,2,k+1)
             plt.plot(self.des_velocities[:,k], label='Desired velocities')
             plt.plot(self.meas_velocities[:,k], label='Measured velocities')
         plt.legend()
-        plt.title('Velocities tracking')
         plt.show()
 
