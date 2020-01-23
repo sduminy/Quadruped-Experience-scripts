@@ -10,7 +10,7 @@ import libmaster_board_sdk_pywrap as mbs
 import numpy as np
 
 # import the controller class with its parameters
-from P_controller import controller, q0, omega
+from PDff_controller import controller, q0, omega
 import log_class
 import Relief_controller
 import EmergencyStop_controller
@@ -55,7 +55,7 @@ def example_script(name_interface):
 
     last = clock()
 
-    while ((not robot_if.IsTimeout()) and (clock() < 60)):  # Stop after 15 seconds (around 5 seconds are used at the start for calibration)
+    while ((not robot_if.IsTimeout()) and (clock() < 20)):  # Stop after 15 seconds (around 5 seconds are used at the start for calibration)
         if ((clock() - last) > dt):
             last = clock()
             cpt += 1

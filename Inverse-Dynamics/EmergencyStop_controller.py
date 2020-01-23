@@ -30,4 +30,4 @@ class controller:
 		# Torque controller
 		tau = np.zeros((8,1))
 		
-		return tau
+		return tau.flatten()

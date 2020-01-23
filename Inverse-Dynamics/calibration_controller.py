@@ -37,7 +37,7 @@ class controller:
         # PD Torque controller
         P = 8*np.diag((0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
         D = 0.05*np.diag((1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
-        tau = np.array((P @ (self.qdes - qmes) - D @ vmes).T)
+        tau = np.array(P @ (self.qdes - qmes) - D @ vmes)
         tau[0,0]=0.0
         
         # Saturation to limit the maximal torque
