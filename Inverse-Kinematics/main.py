@@ -16,6 +16,7 @@ from pinocchio.robot_wrapper import RobotWrapper # Robot Wrapper to load an URDF
 import time # Time module to sleep()
 from initialization_simulation import configure_simulation, getPosVelJoints # Functions to initialize the simulation and retrieve joints positions/velocities
 from walking_controller import c_walking_IK_bezier # Controller functions
+import matplotlib.pylab as plt 
 
 ####################
 ## INITIALIZATION ##
@@ -23,7 +24,7 @@ from walking_controller import c_walking_IK_bezier # Controller functions
 
 dt = 0.001 # time step of the simulation
 realTimeSimulation = False # If True then we will sleep in the main loop to have a 1:1 ratio of (elapsed real time / elapsed time in the simulation)
-enableGUI = False # enable PyBullet GUI or not
+enableGUI = True # enable PyBullet GUI or not
 robotId, solo, revoluteJointIndices = configure_simulation(dt, enableGUI)
 
 ###############
@@ -31,8 +32,11 @@ robotId, solo, revoluteJointIndices = configure_simulation(dt, enableGUI)
 ###############
 
 t_list = []
+T = 0.3 			# period of the foot trajectory
+Q = np.zeros((int(T/dt),8))
+V = np.zeros((int(T/dt),8))
 
-for i in range(10000): # run the simulation during dt * i_max seconds (simulation time)
+for i in range(1000): # run the simulation during dt * i_max seconds (simulation time)
 	
 	t_start = time.time()
 
@@ -40,24 +44,30 @@ for i in range(10000): # run the simulation during dt * i_max seconds (simulati
 	q, qdot = getPosVelJoints(robotId, revoluteJointIndices)
 
 	# Call controller to get torques for all joints
-	jointTorques= c_walking_IK_bezier(q, qdot, dt, solo, dt*i)
-		
+	jointTorques, qa_ref, qa_dot_ref = c_walking_IK_bezier(q, qdot, dt, solo, dt*i)
+	
+	if(i<int(T/dt)):
+		for k in range(8):
+			Q[i,k] = qa_ref[k]
+			V[i,k] = qa_dot_ref[k]
+
 	# Set control torques for all joints in PyBullet
-	#p.setJointMotorControlArray(robotId, revoluteJointIndices, controlMode=p.TORQUE_CONTROL, forces=jointTorques)
+	p.setJointMotorControlArray(robotId, revoluteJointIndices, controlMode=p.TORQUE_CONTROL, forces=jointTorques)
 
 	# Compute one step of simulation
-	#p.stepSimulation()
+	p.stepSimulation()
 	
 	t_spent = time.time() - t_start
 		
 	t_list.append(t_spent)
 
 
-import matplotlib.pylab as plt 
+np.savez('/home/ada/Desktop/Script_Segolene_XP/Quadruped-Experience-scripts/Inverse-Dynamics/reference_q_v', qdes=Q, vdes=V)
 
-plt.figure(1)
+
+""" plt.figure(1)
 plt.plot(t_list, 'k+')
-plt.show()
+plt.show() """
 
 # Shut down the PyBullet client
 p.disconnect()

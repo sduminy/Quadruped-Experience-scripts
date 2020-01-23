@@ -22,7 +22,7 @@ pin.switchToNumpyMatrix()
 # Initialization of the controller's parameters
 q_ref = np.zeros((15,1))
 flag_q_ref = True
-q_list = []	#list to get the configurations for one cycle T
+q_list = []
 
 def c_walking_IK(q, qdot, dt, solo, t_simu):
 	
@@ -159,6 +159,7 @@ def c_walking_IK(q, qdot, dt, solo, t_simu):
 # Method : Inverse Kinematics
 # Trajectory : bezier curve
 
+
 # Initialization of the variables
 K = 100. 			# convergence gain
 T = 0.3				# period of one gait cycle
@@ -244,6 +245,7 @@ def ftraj_Hind(t):	#arguments : time
 			
 		return np.matrix([x,z])
 
+
 def c_walking_IK_bezier(q, qdot, dt, solo, t_simu):
 	
 	qu = q[:7] # unactuated, [x, y, z] position of the base + [x, y, z, w] orientation of the base (stored as a quaternion)
@@ -256,7 +258,6 @@ def c_walking_IK_bezier(q, qdot, dt, solo, t_simu):
 
 	###############################################
 	# Insert code here to set qa_ref and qa_dot_ref
-	
 	
 	global q_ref, flag_q_ref, T
 	
@@ -331,8 +332,7 @@ def c_walking_IK_bezier(q, qdot, dt, solo, t_simu):
 	qa_ref = q_ref[7:]
 	
 	# DONT FORGET TO RUN GEPETTO-GUI BEFORE RUNNING THIS PROGRAMM #
-	#solo.display(q) # display the robot in the viewer Gepetto-GUI given its configuration q
-	
+	solo.display(q) # display the robot in the viewer Gepetto-GUI given its configuration q
 			
 	# End of the control code
 	###############################################
@@ -348,4 +348,4 @@ def c_walking_IK_bezier(q, qdot, dt, solo, t_simu):
    
 	# torques must be a numpy array of shape (8, 1) containing the torques applied to the 8 motors
 	
-	return torques
+	return torques, qa_ref, qa_dot_ref
