@@ -7,6 +7,8 @@ from pinocchio.robot_wrapper import RobotWrapper # Robot Wrapper to load an URDF
 # Other modules
 import numpy as np
 from PD import PD
+from curves import bezier
+from numpy.linalg import pinv
 
 pin.switchToNumpyMatrix()
 
@@ -158,12 +160,97 @@ def c_walking_IK(q, qdot, dt, solo, t_simu):
 # Trajectory : bezier curve
 
 
+# Initialization of the variables
+K = 100. 			# convergence gain
+T = 0.3				# period of one gait cycle
+
+xF0 = 0.19	#initial position of the front feet
+xH0 = -0.19	#initial position of the hind feet
+z0 = 0.0	#initial altitude of each foot
+
+L = 0.04			# desired leg stride in a gait cycle
+Tst = T*.5			# time of the stance phase
+Tsw = T*.5			# time of the swing phase
+Vdesired = L/Tst	# desired velocity of the robot
+vD = 0.001			# virtual displacement to ensure the body stability
+h = 0.06			# maximal height of the foot
+
+# Control points for the Bezier curve
+P0_F  = [    xF0    ,   z0    ]
+P1_F  = [xF0-0.125*L,   z0    ]
+P2_F  = [ xF0-0.5*L , z0+0.8*h]
+P3_F  = [ xF0-0.5*L , z0+0.8*h]
+P4_F  = [ xF0-0.5*L , z0+0.8*h]
+P5_F  = [ xF0+0.5*L , z0+0.8*h]
+P6_F  = [ xF0+0.5*L , z0+0.8*h]
+P7_F  = [ xF0+0.5*L ,  z0+h   ]
+P8_F  = [ xF0+1.5*L ,  z0+h   ]
+P9_F  = [ xF0+1.5*L ,  z0+h   ]
+P10_F = [xF0+1.125*L,   z0    ]
+P11_F = [  xF0 + L  ,   z0    ]
+
+waypoints_F = np.matrix([P0_F, P1_F, P2_F, P3_F, P4_F, P5_F, P6_F, P7_F, P8_F, P9_F, P10_F, P11_F]).T
+bc_F = bezier(waypoints_F, 0.0, Tsw)
+
+def ftraj_Front(t):	#arguments : time
+				
+		x = []
+		z = []
+		
+		t %= T
+			
+		if t <= Tsw :
+			x.append(bc_F(t)[0,0])
+			z.append(bc_F(t)[1,0])
+			
+		else :
+			t -= Tsw
+			x.append(P11_F[0] - Vdesired * t)
+			z.append(-vD * np.cos(np.pi * (0.5 - Vdesired * t / L)) - P0_F[1])
+			
+		return np.matrix([x,z])
+
+# Control points for the Bezier curve
+P0_H  = [    xH0    ,   z0    ]
+P1_H  = [xH0-0.125*L,   z0    ]
+P2_H  = [ xH0-0.5*L , z0+0.8*h]
+P3_H  = [ xH0-0.5*L , z0+0.8*h]
+P4_H  = [ xH0-0.5*L , z0+0.8*h]
+P5_H  = [ xH0+0.5*L , z0+0.8*h]
+P6_H  = [ xH0+0.5*L , z0+0.8*h]
+P7_H  = [ xH0+0.5*L ,  z0+h   ]
+P8_H  = [ xH0+1.5*L ,  z0+h   ]
+P9_H  = [ xH0+1.5*L ,  z0+h   ]
+P10_H = [xH0+1.125*L,   z0    ]
+P11_H = [  xH0 + L  ,   z0    ]
+
+waypoints_H = np.matrix([P0_H, P1_H, P2_H, P3_H, P4_H, P5_H, P6_H, P7_H, P8_H, P9_H, P10_H, P11_H]).T
+bc_H = bezier(waypoints_H, 0.0, Tsw)
+
+def ftraj_Hind(t):	#arguments : time
+				
+		x = []
+		z = []
+		
+		t %= T
+			
+		if t <= Tsw :
+			x.append(bc_H(t)[0,0])
+			z.append(bc_H(t)[1,0])
+			
+		else :
+			t -= Tsw
+			x.append(P11_H[0] - Vdesired * t)
+			z.append(-vD * np.cos(np.pi * (0.5 - Vdesired * t / L)) - P0_H[1])
+			
+		return np.matrix([x,z])
+
 
 def c_walking_IK_bezier(q, qdot, dt, solo, t_simu):
 	
-	qu = q[:7] # unactuated, [x, y, z] position of the base + [x, y, z, w] orientation of the base (stored as a quaternion)
-	qa = q[7:] # actuated, [q1, q2, ..., q8] angular position of the 8 motors
-	qu_dot = qdot[:6] # [v_x, v_y, v_z] linear velocity of the base and [w_x, w_y, w_z] angular velocity of the base along x, y, z axes of the world
+	qu = q[:7] # unactuated, [x, y, z] position of the base + [x, y, z, w] orientation of the base (stored as a quaternion)
+	qa = q[7:] # actuated, [q1, q2, ..., q8] angular position of the 8 motors
+	qu_dot = qdot[:6] # [v_x, v_y, v_z] linear velocity of the base and [w_x, w_y, w_z] angular velocity of the base along x, y, z axes of the world
 	qa_dot = qdot[6:] # angular velocity of the 8 motors
 	
 	qa_ref = np.zeros((8,1)) # target angular positions for the motors
@@ -172,79 +259,19 @@ def c_walking_IK_bezier(q, qdot, dt, solo, t_simu):
 	###############################################
 	# Insert code here to set qa_ref and qa_dot_ref
 	
-	from numpy.linalg import pinv
-	
 	global q_ref, flag_q_ref, T
 	
 	if flag_q_ref:
 		q_ref = solo.q0.copy()
 		flag_q_ref = False
 	
-	# Initialization of the variables
-	K = 100. 			# convergence gain
-	T = 0.3				# period of one gait cycle
-	
-	xF0 = 0.19	#initial position of the front feet
-	xH0 = -0.19	#initial position of the hind feet
-	z0 = 0.0	#initial altitude of each foot
 	
 	# Get the frame index of each foot
 	ID_FL = solo.model.getFrameId("FL_FOOT")
 	ID_FR = solo.model.getFrameId("FR_FOOT")
 	ID_HL = solo.model.getFrameId("HL_FOOT")
 	ID_HR = solo.model.getFrameId("HR_FOOT")
-	
-	# function defining the feet's trajectory
-	
-	
-	def ftraj(t, x0, z0):	#arguments : time, initial position x and z
-		
-		from curves import bezier
-		
-		#Initialization
-		
-		global T
-		
-		L = 0.04			# desired leg stride in a gait cycle
-		Tst = T*.5			# time of the stance phase
-		Tsw = T*.5			# time of the swing phase
-		Vdesired = L/Tst	# desired velocity of the robot
-		vD = 0.001			# virtual displacement to ensure the body stability
-		h = 0.06			# maximal height of the foot
 
-		# Control points for the Bezier curve
-		P0  = [    x0    ,   z0    ]
-		P1  = [x0-0.125*L,   z0    ]
-		P2  = [ x0-0.5*L , z0+0.8*h]
-		P3  = [ x0-0.5*L , z0+0.8*h]
-		P4  = [ x0-0.5*L , z0+0.8*h]
-		P5  = [ x0+0.5*L , z0+0.8*h]
-		P6  = [ x0+0.5*L , z0+0.8*h]
-		P7  = [ x0+0.5*L ,  z0+h   ]
-		P8  = [ x0+1.5*L ,  z0+h   ]
-		P9  = [ x0+1.5*L ,  z0+h   ]
-		P10 = [x0+1.125*L,   z0    ]
-		P11 = [  x0 + L  ,   z0    ]
-		
-		waypoints = np.matrix([P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11]).T
-		bc = bezier(waypoints, 0.0, Tsw)
-
-		x = []
-		z = []
-		
-		t %= T
-			
-		if t <= Tsw :
-			x.append(bc(t)[0,0])
-			z.append(bc(t)[1,0])
-			
-		else :
-			t -= Tsw
-			x.append(P11[0] - Vdesired * t)
-			z.append(-vD * np.cos(np.pi * (0.5 - Vdesired * t / L)) - P0[1])
-			
-		return np.matrix([x,z])
-	
 	# Compute/update all the joints and frames
 	pin.forwardKinematics(solo.model, solo.data, q_ref)
 	pin.updateFramePlacements(solo.model, solo.data)
@@ -256,10 +283,10 @@ def c_walking_IK_bezier(q, qdot, dt, solo, t_simu):
 	xz_HR = solo.data.oMf[ID_HR].translation[0::2]
 	
 	# Desired foot trajectory
-	xzdes_FL = ftraj(t_simu, xF0, z0)
-	xzdes_HR = ftraj(t_simu, xH0, z0)
-	xzdes_FR = ftraj(t_simu+T/2, xF0, z0)
-	xzdes_HL = ftraj(t_simu+T/2, xH0, z0)
+	xzdes_FL = ftraj_Front(t_simu)
+	xzdes_HR = ftraj_Hind(t_simu)
+	xzdes_FR = ftraj_Front(t_simu+T/2)
+	xzdes_HL = ftraj_Hind(t_simu+T/2)
 	
 	# Calculating the error
 	err_FL = xz_FL - xzdes_FL
@@ -306,8 +333,6 @@ def c_walking_IK_bezier(q, qdot, dt, solo, t_simu):
 	
 	# DONT FORGET TO RUN GEPETTO-GUI BEFORE RUNNING THIS PROGRAMM #
 	solo.display(q) # display the robot in the viewer Gepetto-GUI given its configuration q
-	
-	q_list.append(qa_ref)
 			
 	# End of the control code
 	###############################################
@@ -323,4 +348,4 @@ def c_walking_IK_bezier(q, qdot, dt, solo, t_simu):
    
 	# torques must be a numpy array of shape (8, 1) containing the torques applied to the 8 motors
 	
-	return torques, xzdes_FR[0], xzdes_FR[1], xz_FR[0], xz_FR[1]
+	return torques, qa_ref, qa_dot_ref
