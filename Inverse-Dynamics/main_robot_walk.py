@@ -56,7 +56,7 @@ def example_script(name_interface):
 
     last = clock()
 
-    while (not robot_if.IsTimeout() and clock() < 15):
+    while (not robot_if.IsTimeout() and clock() < 305):
         if ((clock() - last) > dt):
             last = clock()
             cpt += 1

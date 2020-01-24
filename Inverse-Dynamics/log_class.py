@@ -63,7 +63,7 @@ class log:
     ####################################################################
     def plot_logs(self):
         
-        plt.figure(0)
+        """plt.figure(0)
         plt.plot(self.iterations, label='iterations')
         plt.legend()
        
@@ -71,7 +71,7 @@ class log:
         plt.figure(1)
         plt.plot(self.times, 'k+')
         plt.grid()
-        plt.title('Computing time')
+        plt.title('Computing time')"""
         
 
         plt.figure(2)

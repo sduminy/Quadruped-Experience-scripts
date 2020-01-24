@@ -37,14 +37,14 @@ class controller:
          
     
         # PD Torque controller
-        P_final = 0.1        # final proportionnal gain
-        D_final = 0.01      # final derivative gain
+        P_final = 3.0        # final proportionnal gain
+        D_final = 0.07      # final derivative gain
         
         # Slowly increase the P and D
         
-        if self.iter < 3000:
-            P = self.iter*P_final/3000.0
-            D = self.iter*D_final/3000.0
+        if self.iter < 10000:
+            P = self.iter*P_final/10000.0
+            D = self.iter*D_final/10000.0
         else:
             P = P_final
             D = D_final
