@@ -111,7 +111,7 @@ def example_script(name_interface):
                 # Logging
                 myLog.log_method(clock()-last, myController.qdes, myController.vdes, qmes, vmes, vfilt, jointTorques, myController.iter)
                 
-                #jointTorques *= 0
+                jointTorques *= 0
 
                 # Set the desired torques to the motors
                 set_desired_torques(robot_if, jointTorques)
@@ -130,7 +130,15 @@ def example_script(name_interface):
 
     print("-- Shutting down --")
     
-    np.savez('/home/ada/Desktop/Script_Segolene_XP/Quadruped-Experience-scripts/Inverse-Dynamics/logs', times=myLog.times, des_positions=myLog.des_positions, des_velocities=myLog.des_velocities, meas_positions=myLog.meas_positions, meas_velocities=myLog.meas_velocities)
+    np.savez('/home/ada/Desktop/Script_Segolene_XP/Quadruped-Experience-scripts/Inverse-Dynamics/logs', \
+            times=myLog.times, \
+            des_positions=myLog.des_positions, \
+            des_velocities=myLog.des_velocities, \
+            filt_velocities=myLog.filt_velocities, \
+            meas_positions=myLog.meas_positions, \
+            meas_velocities=myLog.meas_velocities, \
+            torques=myLog.torques, \
+            iter=myLog.iter)
     
     myLog.plot_logs()
 
