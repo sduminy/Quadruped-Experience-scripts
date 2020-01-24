@@ -7,10 +7,8 @@
 #                                                                      #
 ########################################################################
 
-import pinocchio as pin
-import numpy as np 
 
-pin.switchToNumpyMatrix()
+import numpy as np 
 
 
 ########################################################################
@@ -19,8 +17,10 @@ pin.switchToNumpyMatrix()
 
 class controller:
 	
-	def __init__(self):
+	def __init__(self, qdes, vdes):
 		self.error = False
+		self.qdes = qdes
+		self.vdes = vdes
 		
 	####################################################################
 	#                      Torque Control method                       #
@@ -30,4 +30,4 @@ class controller:
 		# Torque controller
 		tau = np.zeros((8,1))
 		
-		return tau
+		return tau.flatten()

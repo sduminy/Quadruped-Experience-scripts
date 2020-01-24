@@ -115,7 +115,7 @@ class controller:
 		
 		if (self.error): print("Status of the solution : ", self.sol.status)
 		
-		return tau
+		return tau.flatten()
 
 # Parameters for the controller
 

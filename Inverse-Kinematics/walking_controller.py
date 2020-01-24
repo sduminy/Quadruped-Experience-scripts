@@ -7,9 +7,15 @@ from pinocchio.robot_wrapper import RobotWrapper # Robot Wrapper to load an URDF
 # Other modules
 import numpy as np
 from PD import PD
+<<<<<<< HEAD
 from curves import bezier
 from numpy.linalg import pinv
 
+=======
+from numpy.linalg import pinv
+from curves import bezier
+		
+>>>>>>> db692571595ad962571f83ff05c98ef88268a8a4
 pin.switchToNumpyMatrix()
 
 ########################
@@ -22,7 +28,7 @@ pin.switchToNumpyMatrix()
 # Initialization of the controller's parameters
 q_ref = np.zeros((15,1))
 flag_q_ref = True
-q_list = []	#list to get the configurations for one cycle T
+q_list = []
 
 def c_walking_IK(q, qdot, dt, solo, t_simu):
 	
@@ -134,7 +140,7 @@ def c_walking_IK(q, qdot, dt, solo, t_simu):
 	qa_ref = q_ref[7:]
 	
 	# DONT FORGET TO RUN GEPETTO-GUI BEFORE RUNNING THIS PROGRAMM #
-	solo.display(q) # display the robot in the viewer Gepetto-GUI given its configuration q
+	#solo.display(q) # display the robot in the viewer Gepetto-GUI given its configuration q
 	
 	q_list.append(qa_ref)
 			
@@ -348,4 +354,8 @@ def c_walking_IK_bezier(q, qdot, dt, solo, t_simu):
    
 	# torques must be a numpy array of shape (8, 1) containing the torques applied to the 8 motors
 	
+<<<<<<< HEAD
 	return torques, qa_ref, qa_dot_ref
+=======
+	return torques, qa_ref, qa_dot_ref
+>>>>>>> db692571595ad962571f83ff05c98ef88268a8a4

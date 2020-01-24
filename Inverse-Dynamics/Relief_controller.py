@@ -7,10 +7,8 @@
 #                                                                      #
 ########################################################################
 
-import pinocchio as pin
-import numpy as np 
 
-pin.switchToNumpyMatrix()
+import numpy as np 
 
 
 ########################################################################
@@ -19,23 +17,27 @@ pin.switchToNumpyMatrix()
 
 class controller:
 	
-	def __init__(self):
+	def __init__(self, qdes, vdes):
 		self.error = False
-	
+		self.qdes = qdes
+		self.vdes = vdes
+
 	####################################################################
 	#                      Torque Control method                       #
 	####################################################################
 	def control(self, qmes, vmes, t):
 		
 		# D Torque controller,
-		D = 0.2
-		tau = -D * vmes
+		D = 0.05
+		tau = np.array(-D @ vmes)
 		
 		# Saturation to limit the maximal torque
 		t_max = 2.5
 		tau = np.maximum(np.minimum(tau, t_max * np.ones((8,1))), -t_max * np.ones((8,1)))
 		
-		return tau
+		return tau.flatten()
+
+	
 
 class controller_12dof:
 	
