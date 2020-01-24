@@ -2,7 +2,7 @@ import numpy as np
 
 N_SLAVES_CONTROLED = 4  # Current number of controled drivers
 Kt = 1.0/(9*0.02) #A/Nm
-iq_sat = 5.0  # Maximum amperage (A)
+iq_sat = 3.0  # Maximum amperage (A)
 
 def enable_all_motors(robot_if):
     # Enable each controler driver and its two associated motors

@@ -52,20 +52,25 @@ class controller:
     ####################################################################
     def control(self, qmes, vmes, t):
         # Definition of qdes, vdes and ades
-        self.qdes = 0.4*np.sin(self.omega * t) + self.q0
-        self.vdes = 0.4*self.omega * np.cos(self.omega * t)
-        self.ades = -0.4*self.omega**2 * np.sin(self.omega * t)
+        self.qdes = 1.2*np.sin(self.omega * t) + self.q0
+        self.qdes[1] = 0.0
+        self.vdes = 1.2*self.omega * np.cos(self.omega * t)
+        self.ades = -1.2*self.omega**2 * np.sin(self.omega * t)
         
-        tau_ff = pin.rnea(self.model, self.data, self.qdes, self.vdes, self.ades)		# feed-forward torques
+        rho = 9            # reduction between the rotor and the joint
+        Lyy = 0.00000447   # (kg.m2) inertia of the motor rotor to improve the accuracy of tau_ff
+        m = rho**2 * Lyy   # inertia of the rotor reflected on the joints
+        # tau_ff = (M + m) * ades + b(qdes,vdes) but rnea = M * ades + b(qdes, vdes)
+        tau_ff = pin.rnea(self.model, self.data, self.qdes, self.vdes, self.ades) + m * self.qdes		# feed-forward torques
         
         # PD Torque controller
         P = 5*np.diag((1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
-        D = 0.05*np.diag((1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
-        K_ff = np.diag((0.8, 0.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
+        D = 0.05*np.diag((1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
+        K_ff = np.diag((1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
         
         if (t>7.5):
-            K_ff = - np.diag((0.8, 0.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
-        
+            K_ff = - np.diag((0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
+            
         tau = np.array(P @ (self.qdes - qmes) + D @ (self.vdes - vmes) + K_ff @ tau_ff)
         
         # Saturation to limit the maximal torque
@@ -83,4 +88,4 @@ omega = np.zeros((8,1))		# sinus pulsation
 q0 = np.zeros((8,1))		# initial configuration
 
 for i in range(8):
-    omega[i] = 5.0
+    omega[i] = 3.0

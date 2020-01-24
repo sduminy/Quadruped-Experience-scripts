@@ -103,24 +103,23 @@ class controller:
 		self.qdes = pin.integrate(self.model, self.qdes, self.vdes * dt)
 		
 		# Torque PD controller
-		P = 10.0
-		D = 0.2
-		torques = P * (self.qdes - qmes) + D * (self.vdes - vmes) + tau_ff
+		P = 5.0
+		D = 0.05
+		K_ff = 1.0
+		torques = np.array(P * (self.qdes - qmes) + D * (self.vdes - vmes) + K_ff * tau_ff)
 		
 		# Saturation to limit the maximal torque
-		t_max = 2.5
+		t_max = 1.0
 		tau = np.maximum(np.minimum(torques, t_max * np.ones((8,1))), -t_max * np.ones((8,1)))
 		
 		self.error = self.error or (self.sol.status!=0) or (qmes[0] < -np.pi/2) or (qmes[2] < -np.pi/2) or (qmes[4] < -np.pi/2) or (qmes[6] < -np.pi/2) or (qmes[0] > np.pi/2) or (qmes[2] > np.pi/2) or (qmes[4] > np.pi/2) or (qmes[6] > np.pi/2)
-		
-		if (self.error): print("Status of the solution : ", self.sol.status)
 		
 		return tau.flatten()
 
 # Parameters for the controller
 
-dt = 0.001				# controller time step
-
 q0 = np.zeros((8,1))	# initial configuration
 
 omega = 1.0				# sinus pulsation
+
+dt = 0.001

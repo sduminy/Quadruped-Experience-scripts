@@ -10,7 +10,7 @@ import libmaster_board_sdk_pywrap as mbs
 import numpy as np
 
 # import the controller class with its parameters
-from PDff_controller import controller, q0, omega
+from walking_PD_controller import controller
 import log_class
 import Relief_controller
 import EmergencyStop_controller
@@ -54,16 +54,16 @@ def example_script(name_interface):
     ########################################################################
 
     # Initialize the main controller
-    myController = controller(q0, omega, t)
+    myController = controller()
     myLog = log_class.log(N_LOG=14000)
 
     last = clock()
 
-    while ((not robot_if.IsTimeout()) and (clock() < 20)):  # Stop after 15 seconds (around 5 seconds are used at the start for calibration)
+    while (not robot_if.IsTimeout() and clock() < 15):
         if ((clock() - last) > dt):
             last = clock()
             cpt += 1
-            
+
             # Time incrementation
             t += dt
             
@@ -106,12 +106,16 @@ def example_script(name_interface):
                     myController = myEmergencyStop
 
                 # Retrieve the joint torques from the appropriate controller
-                jointTorques = myController.control(qmes, vmes, t)
+                jointTorques = myController.control(qmes, vmes)
+                
+                # Logging
+                myLog.log_method(clock()-last, myController.qdes, myController.vdes, qmes, vmes, vfilt, jointTorques, myController.iter)
+                
+                #jointTorques *= 0
+
                 # Set the desired torques to the motors
                 set_desired_torques(robot_if, jointTorques)
 
-                # Logging
-                myLog.log_method(clock()-last, myController.qdes, myController.vdes, qmes, vmes, vfilt)
                 
             if ((cpt % 100) == 0):  # Display state of the system once every 100 iterations of the main loop
                 print(chr(27) + "[2J")
@@ -128,7 +132,7 @@ def example_script(name_interface):
     
     np.savez('/home/ada/Desktop/Script_Segolene_XP/Quadruped-Experience-scripts/Inverse-Dynamics/logs', times=myLog.times, des_positions=myLog.des_positions, des_velocities=myLog.des_velocities, meas_positions=myLog.meas_positions, meas_velocities=myLog.meas_velocities)
     
-    myLog.plot_logs_velocities()
+    myLog.plot_logs()
 
     robot_if.Stop()  # Shut down the interface between the computer and the master board
     

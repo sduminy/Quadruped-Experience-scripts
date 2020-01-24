@@ -29,7 +29,7 @@ class controller:
 		
 		# D Torque controller,
 		D = 0.05
-		tau = np.array(-D @ vmes)
+		tau = np.array(-D * vmes)
 		
 		# Saturation to limit the maximal torque
 		t_max = 2.5
