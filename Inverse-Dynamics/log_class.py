@@ -66,13 +66,13 @@ class log:
         plt.figure(0)
         plt.plot(self.iterations, label='iterations')
         plt.legend()
-        plt.show()
+       
 
         plt.figure(1)
         plt.plot(self.times, 'k+')
         plt.grid()
         plt.title('Computing time')
-        plt.show()
+        
 
         plt.figure(2)
         plt.suptitle('Positions tracking')
@@ -81,7 +81,7 @@ class log:
             plt.plot(self.des_positions[:,k], label='Desired positions')
             plt.plot(self.meas_positions[:,k], label='Measured positions')
         plt.legend()
-        plt.show()
+        
         
         plt.figure(3)
         plt.suptitle('Velocities tracking')
@@ -90,7 +90,7 @@ class log:
             plt.plot(self.des_velocities[:,k], label='Desired velocities')
             plt.plot(self.filt_velocities[:,k], label='Filtered measured velocities')
         plt.legend()
-        plt.show()
+        
 
         plt.figure(4)
         plt.suptitle('Torques tracking')
@@ -105,7 +105,7 @@ class log:
         plt.plot(self.times, 'k+')
         plt.grid()
         plt.title('Computing time')
-        plt.show()
+        
 
         plt.figure(2)
         plt.suptitle('Positions tracking')
@@ -114,7 +114,7 @@ class log:
             plt.plot(self.des_positions[:,k], label='Desired positions')
             plt.plot(self.meas_positions[:,k], label='Measured positions')
         plt.legend()
-        plt.show()
+        
         
         plt.figure(3)
         plt.suptitle('Velocities tracking')

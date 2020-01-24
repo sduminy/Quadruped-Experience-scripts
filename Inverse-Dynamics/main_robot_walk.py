@@ -52,7 +52,7 @@ def example_script(name_interface):
 
     # Initialize the main controller
     myController = controller()
-    myLog = log_class.log(N_LOG=14000)
+    myLog = log_class.log(N_LOG=10000)
 
     last = clock()
 

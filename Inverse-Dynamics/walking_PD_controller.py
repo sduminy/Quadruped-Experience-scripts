@@ -37,7 +37,7 @@ class controller:
          
     
         # PD Torque controller
-        P_final = 1.        # final proportionnal gain
+        P_final = 0.1        # final proportionnal gain
         D_final = 0.01      # final derivative gain
         
         # Slowly increase the P and D
