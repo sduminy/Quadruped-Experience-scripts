@@ -7,9 +7,15 @@ from pinocchio.robot_wrapper import RobotWrapper # Robot Wrapper to load an URDF
 # Other modules
 import numpy as np
 from PD import PD
+<<<<<<< HEAD
+from curves import bezier
+from numpy.linalg import pinv
+
+=======
 from numpy.linalg import pinv
 from curves import bezier
 		
+>>>>>>> db692571595ad962571f83ff05c98ef88268a8a4
 pin.switchToNumpyMatrix()
 
 ########################
@@ -248,9 +254,9 @@ def ftraj_Hind(t):	#arguments : time
 
 def c_walking_IK_bezier(q, qdot, dt, solo, t_simu):
 	
-	qu = q[:7] # unactuated, [x, y, z] position of the base + [x, y, z, w] orientation of the base (stored as a quaternion)
-	qa = q[7:] # actuated, [q1, q2, ..., q8] angular position of the 8 motors
-	qu_dot = qdot[:6] # [v_x, v_y, v_z] linear velocity of the base and [w_x, w_y, w_z] angular velocity of the base along x, y, z axes of the world
+	qu = q[:7] # unactuated, [x, y, z] position of the base + [x, y, z, w] orientation of the base (stored as a quaternion)
+	qa = q[7:] # actuated, [q1, q2, ..., q8] angular position of the 8 motors
+	qu_dot = qdot[:6] # [v_x, v_y, v_z] linear velocity of the base and [w_x, w_y, w_z] angular velocity of the base along x, y, z axes of the world
 	qa_dot = qdot[6:] # angular velocity of the 8 motors
 	
 	qa_ref = np.zeros((8,1)) # target angular positions for the motors
@@ -348,4 +354,8 @@ def c_walking_IK_bezier(q, qdot, dt, solo, t_simu):
    
 	# torques must be a numpy array of shape (8, 1) containing the torques applied to the 8 motors
 	
+<<<<<<< HEAD
 	return torques, qa_ref, qa_dot_ref
+=======
+	return torques, qa_ref, qa_dot_ref
+>>>>>>> db692571595ad962571f83ff05c98ef88268a8a4
