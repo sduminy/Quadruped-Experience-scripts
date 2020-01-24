@@ -21,8 +21,8 @@ class controller:
         
         self.error = False
 
-        self.q = np.load('reference_q_v.npz')['qdes']       # load the reference position and velocity vectors
-        self.v = np.load('reference_q_v.npz')['vdes']       # the shape of each vector is (8,)
+        self.q = np.load('reference_q_v_slow.npz')['qdes']       # load the reference position and velocity vectors
+        self.v = np.load('reference_q_v_slow.npz')['vdes']       # the shape of each vector is (8,)
         self.N_POINTS = len(self.q)                         # N_POINTS is the number of points needed to complete the trajectory
         self.iter = 0                                       # iter permits to slowly increase the gains
 
