@@ -23,18 +23,32 @@ class log:
         self.meas_velocities = np.zeros((N_LOG,8))
         self.filt_velocities = np.zeros((N_LOG,8))
         self.torques = np.zeros((N_LOG, 8))
-        self.cpt = np.zeros((N_LOG,1))
+        self.iterations = np.zeros((N_LOG,1))
     
         
     ####################################################################
     #                            Log method                            #
     ####################################################################
-    def log_method(self, computing_time, qdes, vdes, qmes, vmes, vfilt, tau, cpt):
+    def log_method(self, computing_time, qdes, vdes, qmes, vmes, vfilt, tau):
         
         # Logging
         if (self.i < self.N_LOG):
             self.times[self.i,0] = computing_time
-            self.cpt[self.i,0] = cpt
+            for j in range(8):
+                self.des_positions[self.i,j] = qdes[j]
+                self.des_velocities[self.i,j] = vdes[j]
+                self.meas_positions[self.i,j] = qmes[j]
+                self.meas_velocities[self.i,j] = vmes[j]
+                self.filt_velocities[self.i,j] = vfilt[j]
+                self.torques[self.i,j] = tau[j]
+        self.i += 1
+
+    def log_method_walk(self, computing_time, qdes, vdes, qmes, vmes, vfilt, tau, iteration):
+        
+        # Logging
+        if (self.i < self.N_LOG):
+            self.times[self.i,0] = computing_time
+            self.iterations[self.i,0] = iteration
             for j in range(8):
                 self.des_positions[self.i,j] = qdes[j]
                 self.des_velocities[self.i,j] = vdes[j]
@@ -48,16 +62,17 @@ class log:
     #                         Logs plot method                         #
     ####################################################################
     def plot_logs(self):
-        plt.figure(1)
-        plt.plot(self.cpt, label='temps')
+        
+        plt.figure(0)
+        plt.plot(self.iterations, label='iterations')
         plt.legend()
         plt.show()
 
-        """ plt.figure(1)
+        plt.figure(1)
         plt.plot(self.times, 'k+')
         plt.grid()
         plt.title('Computing time')
-        plt.show() """
+        plt.show()
 
         plt.figure(2)
         plt.suptitle('Positions tracking')
@@ -73,7 +88,7 @@ class log:
         for k in range(8):
             plt.subplot(4,2,k+1)
             plt.plot(self.des_velocities[:,k], label='Desired velocities')
-            plt.plot(self.meas_velocities[:,k], label='Measured velocities')
+            plt.plot(self.filt_velocities[:,k], label='Filtered measured velocities')
         plt.legend()
         plt.show()
 

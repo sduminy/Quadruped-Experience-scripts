@@ -6,7 +6,7 @@ import libmaster_board_sdk_pywrap as mbs
 
 # import the controller class with its parameters
 from P_controller import controller, dt, q0, omega
-import Relief_controller
+import Safety_controller
 import EmergencyStop_controller
 
 
@@ -52,7 +52,7 @@ def example_script(name_interface):
     ########################################################################
 
     myController = controller(q0, omega, t)
-    myReliefController = Relief_controller.controller()
+    mySafetyController = Safety_controller.controller()
     myEmergencyStop = EmergencyStop_controller.controller()
 
 
@@ -92,7 +92,7 @@ def example_script(name_interface):
         # If the limit bounds are reached, controller is switched to a pure derivative controller
         if(myController.error):
             print("Safety bounds reached. Switch to a safety controller")
-            myController = myReliefController
+            myController = mySafetyController
             
         # If the simulation time is too long, controller is switched to a zero torques controller
         time_error = time_error or (time.time()-time_start > 0.003)

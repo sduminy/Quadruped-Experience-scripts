@@ -10,9 +10,9 @@ import libmaster_board_sdk_pywrap as mbs
 import numpy as np
 
 # import the controller class with its parameters
-from PDff_controller import controller, q0, omega
+from walking_PD_controller import controller
 import log_class
-import Relief_controller
+import Safety_controller
 import EmergencyStop_controller
 from masterboard_utils import *
 
@@ -95,8 +95,8 @@ def example_script(name_interface):
                 # If the limit bounds are reached, controller is switched to a pure derivative controller
                 if(myController.error):
                     print("Safety bounds reached. Switch to a safety controller")
-                    myReliefController = Relief_controller.controller(myController.qdes, myController.vdes)
-                    myController = myReliefController
+                    mySafetyController = Safety_controller.controller(myController.qdes, myController.vdes)
+                    myController = mySafetyController
 
                 # If the simulation time is too long, controller is switched to a zero torques controller
                 time_error = time_error or ((clock()-last) > 0.003)
@@ -111,7 +111,7 @@ def example_script(name_interface):
                 set_desired_torques(robot_if, jointTorques)
 
                 # Logging
-                myLog.log_method(clock()-last, myController.qdes, myController.vdes, qmes, vmes, vfilt)
+                myLog.log_method(clock()-last, myController.qdes, myController.vdes, qmes, vmes, vfilt, jointTorques)
                 
             if ((cpt % 100) == 0):  # Display state of the system once every 100 iterations of the main loop
                 print(chr(27) + "[2J")

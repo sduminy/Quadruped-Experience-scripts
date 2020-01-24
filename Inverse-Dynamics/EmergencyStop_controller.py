@@ -25,7 +25,7 @@ class controller:
 	####################################################################
 	#                      Torque Control method                       #
 	####################################################################
-	def control(self, qmes, vmes, t):
+	def control(self, qmes, vmes):
 		
 		# Torque controller
 		tau = np.zeros((8,1))

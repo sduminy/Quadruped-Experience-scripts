@@ -1,6 +1,10 @@
 import numpy as np
 
 N_SLAVES_CONTROLED = 4  # Current number of controled drivers
+# Proportionnal gain to convert joint torques to current : I = Kt * tau_joints 
+# tau_mot = Ki * I with Ki = 0.02 Nm/A 
+# tau_joints = rho * tau_mot with rho = 9.0
+# Kt = 1/(rho * Ki)
 Kt = 1.0/(9*0.02) #A/Nm
 iq_sat = 3.0  # Maximum amperage (A)
 
@@ -17,6 +21,7 @@ def enable_all_motors(robot_if):
     return
 
 def saturate(value, saturation):
+    # Saturate the current between [-iq_sat, iq_sat]
     if (value > saturation):  #  Check saturation
         value = saturation
     if (value < -saturation):
@@ -25,6 +30,8 @@ def saturate(value, saturation):
 
 
 def set_desired_torques(robot_if, tau):
+    # Transform joint torques into motor currents and apply those
+    
     Kt = 1.0/(9*0.02)
     for i in range(N_SLAVES_CONTROLED * 2):
                     cur = 0.0
@@ -58,6 +65,9 @@ def set_desired_torques(robot_if, tau):
 
 
 def update_measured_q_v(robot_if, q, v):
+    # Get the motor positions and velocities from the masterboard
+    # and transforms them into joints positions and velocities (qmes, vmes)
+
     for i in range(N_SLAVES_CONTROLED * 2):
         if robot_if.GetMotor(i).IsEnabled():
             if (i == 0):
@@ -96,6 +106,7 @@ def update_measured_q_v(robot_if, q, v):
     return
 
 def are_all_motor_ready(robot_if):
+    # check if all motors are enabled and ready
     for i in range(N_SLAVES_CONTROLED * 2):
         if not (robot_if.GetMotor(i).IsEnabled() and robot_if.GetMotor(i).IsReady()):
             return False

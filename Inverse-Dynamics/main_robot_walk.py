@@ -1,7 +1,6 @@
 # coding: utf8
 
 from time import clock
-import time
 import sys
 import getopt
 import os
@@ -9,14 +8,16 @@ import os
 import libmaster_board_sdk_pywrap as mbs
 import numpy as np
 
-# import the controller class with its parameters
+# import the useful files (controller and log classes and masterboard utils functions) 
+from masterboard_utils import *
 from walking_PD_controller import controller
 import log_class
-import Relief_controller
+import Safety_controller
 import EmergencyStop_controller
-from masterboard_utils import *
+
 
 dt = 0.001  #  Time step
+
 
 def example_script(name_interface):
 
@@ -39,12 +40,8 @@ def example_script(name_interface):
     qmes = np.zeros((8, 1)) # intialize the measured positions vector
     vmes = np.zeros((8, 1)) # intialize the measured velocities vector
     
-    # Proportionnal gain to convert joint torques to current : tau_mot = K'*I 
-    # tau_joints = Kred*K'*I ; K' = 0.02 Nm/A ; Kred = 9.0
-    Kt = 1.0/(9*0.02)   # A/Nm
-
     flag_1st_it = True      # to intialize the filtered velocities vector
-    alpha = 0.025            # filter coefficient
+    alpha = 0.025           # filter coefficient
 
 
     print("-- Start of example script --")
@@ -74,7 +71,6 @@ def example_script(name_interface):
                 if (are_all_motor_ready(robot_if)):
                     state = 1 
 
-
             if (state==1):  # If the system is ready
                 
                 # Get measured positions and velocities
@@ -95,8 +91,8 @@ def example_script(name_interface):
                 # If the limit bounds are reached, controller is switched to a pure derivative controller
                 if(myController.error):
                     print("Safety bounds reached. Switch to a safety controller")
-                    myReliefController = Relief_controller.controller(myController.qdes, myController.vdes)
-                    myController = myReliefController
+                    mySafetyController = Safety_controller.controller(myController.qdes, myController.vdes)
+                    myController = mySafetyController
 
                 # If the simulation time is too long, controller is switched to a zero torques controller
                 time_error = time_error or ((clock()-last) > 0.003)
@@ -109,9 +105,9 @@ def example_script(name_interface):
                 jointTorques = myController.control(qmes, vmes)
                 
                 # Logging
-                myLog.log_method(clock()-last, myController.qdes, myController.vdes, qmes, vmes, vfilt, jointTorques, myController.iter)
+                myLog.log_method_walk(clock()-last, myController.qdes, myController.vdes, qmes, vmes, vfilt, jointTorques, myController.iter)
                 
-                jointTorques *= 0
+                #jointTorques *= 0
 
                 # Set the desired torques to the motors
                 set_desired_torques(robot_if, jointTorques)
@@ -138,7 +134,7 @@ def example_script(name_interface):
             meas_positions=myLog.meas_positions, \
             meas_velocities=myLog.meas_velocities, \
             torques=myLog.torques, \
-            iter=myLog.iter)
+            iter=myLog.iterations)
     
     myLog.plot_logs()
 

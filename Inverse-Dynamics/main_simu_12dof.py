@@ -9,7 +9,7 @@ import matplotlib.pylab as plt
 
 # import the controller class with its parameters
 from TSID_contacts_and_posture_controller import controller, dt, q0, omega
-import Relief_controller
+import Safety_controller
 import EmergencyStop_controller
 
 ########################################################################
@@ -67,7 +67,7 @@ p.setTimeStep(dt)
 ########################################################################
 
 myController = controller(q0, omega, t)
-myReliefController = Relief_controller.controller_12dof()
+mySafetyController = Safety_controller.controller_12dof()
 myEmergencyStop = EmergencyStop_controller.controller()
 
 for i in range (N_SIMULATION):
@@ -98,7 +98,7 @@ for i in range (N_SIMULATION):
 	# If the limit bounds are reached, controller is switched to a pure derivative controller
 	if(myController.error):
 		print("Safety bounds reached. Switch to a safety controller")
-		myController = myReliefController
+		myController = mySafetyController
 		
 	# If the simulation time is too long, controller is switched to a zero torques controller
 	time_error = time_error or (time.time()-time_start > 0.001)
