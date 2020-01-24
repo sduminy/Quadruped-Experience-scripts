@@ -11,7 +11,7 @@ def configure_simulation(dt,enableGUI):
     global jointTorques
     # Load the robot for Pinocchio
     solo = robots_loader.loadSolo(True)
-    #solo.initViewer(loadModel=True)
+    solo.initViewer(loadModel=True)
 
     # Start the client for PyBullet
     if enableGUI:

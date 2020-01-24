@@ -33,7 +33,7 @@ robotId, solo, revoluteJointIndices = configure_simulation(dt, enableGUI)
 ###############
 
 t_list = []
-T = 0.3 			# period of the foot trajectory
+T = 0.5 			# period of the foot trajectory
 Q = np.zeros((int(T/dt),8))
 V = np.zeros((int(T/dt),8))
 

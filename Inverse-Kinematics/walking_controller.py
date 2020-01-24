@@ -7,15 +7,9 @@ from pinocchio.robot_wrapper import RobotWrapper # Robot Wrapper to load an URDF
 # Other modules
 import numpy as np
 from PD import PD
-<<<<<<< HEAD
 from curves import bezier
 from numpy.linalg import pinv
 
-=======
-from numpy.linalg import pinv
-from curves import bezier
-		
->>>>>>> db692571595ad962571f83ff05c98ef88268a8a4
 pin.switchToNumpyMatrix()
 
 ########################
@@ -168,7 +162,7 @@ def c_walking_IK(q, qdot, dt, solo, t_simu):
 
 # Initialization of the variables
 K = 100. 			# convergence gain
-T = 0.3				# period of one gait cycle
+T = 0.5				# period of one gait cycle
 
 xF0 = 0.19	#initial position of the front feet
 xH0 = -0.19	#initial position of the hind feet
@@ -354,8 +348,4 @@ def c_walking_IK_bezier(q, qdot, dt, solo, t_simu):
    
 	# torques must be a numpy array of shape (8, 1) containing the torques applied to the 8 motors
 	
-<<<<<<< HEAD
 	return torques, qa_ref, qa_dot_ref
-=======
-	return torques, qa_ref, qa_dot_ref
->>>>>>> db692571595ad962571f83ff05c98ef88268a8a4
